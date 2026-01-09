@@ -109,7 +109,6 @@ const initialTenders: Tender[] = [
   },
 ]
 
-// Helper function to parse date string (e.g., "28 Feb 2025")
 const parseDate = (dateStr: string): Date => {
   const months: Record<string, number> = {
     jan: 0,

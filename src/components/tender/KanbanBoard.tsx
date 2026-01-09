@@ -92,7 +92,6 @@ export function KanbanBoard() {
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event
-    // Find tender from all tenders (not sorted) to get the correct tender
     const tender = tenders.find((t) => t.id === active.id)
     setActiveTender(tender || null)
   }
@@ -104,12 +103,10 @@ export function KanbanBoard() {
     if (!over) return
 
     const tenderId = active.id as string
-    // Find from all tenders to get the correct tender
     const currentTender = tenders.find((t) => t.id === tenderId)
     if (!currentTender) return
 
     let newStatus: TenderStatus
-    // Check if dropped on another tender or on a column
     const overTender = tenders.find((t) => t.id === over.id)
 
     if (overTender) {

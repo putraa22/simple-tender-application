@@ -9,6 +9,7 @@ import {
   CheckCircle,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { KanbanBoard } from '../components/tender/KanbanBoard'
 import { useTenderStore, type SortType } from '../store/tenderStore'
 import { SortModal } from '../components/dashboard/SortModal'
@@ -17,10 +18,10 @@ import { UserDropdown } from '../components/dashboard/UserDropdown'
 
 export default function Dashboard() {
   const { tenders, sortType, setSortType } = useTenderStore()
+  const navigate = useNavigate()
   const [showSortModal, setShowSortModal] = useState(false)
   const [selectedSort, setSelectedSort] = useState<SortType>(sortType)
 
-  // Sync selectedSort with sortType from store when it changes
   useEffect(() => {
     setSelectedSort(sortType)
   }, [sortType])
@@ -30,7 +31,6 @@ export default function Dashboard() {
   const ongoingCount = tenders.filter((t) => t.status === 'ongoing').length
   const completedCount = tenders.filter((t) => t.status === 'completed').length
 
-  // Close sort modal on ESC key
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && showSortModal) {
@@ -67,7 +67,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold text-gray-800">Tender</h1>
@@ -75,9 +74,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-6">
-        {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <SummaryCard
             icon={FileText}
@@ -109,10 +106,8 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Toolbar */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
           <div className="flex items-center justify-between gap-4">
-            {/* Search Bar */}
             <div className="flex-1 max-w-md">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -124,9 +119,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex items-center gap-3">
-              {/* Undo/Redo buttons */}
               <button
                 type="button"
                 className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -142,7 +135,6 @@ export default function Dashboard() {
                 <Redo2 className="w-5 h-5 text-gray-600" />
               </button>
 
-              {/* Sort button */}
               <button
                 type="button"
                 onClick={handleSortClick}
@@ -155,6 +147,7 @@ export default function Dashboard() {
               {/* Create Tender Button */}
               <button
                 type="button"
+                onClick={() => navigate('/create-tender')}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-semibold"
               >
                 <Plus className="w-4 h-4" />
