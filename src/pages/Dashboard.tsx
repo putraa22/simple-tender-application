@@ -4,66 +4,65 @@ import {
   Menu,
   Plus,
   Search,
-  User,
   FileText,
   Clock,
   CheckCircle,
-  LogOut,
-  LogIn,
 } from 'lucide-react'
-import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '../store/authStore'
+import { useState, useEffect } from 'react'
 import { KanbanBoard } from '../components/tender/KanbanBoard'
-import { useTenderStore } from '../store/tenderStore'
+import { useTenderStore, type SortType } from '../store/tenderStore'
+import { SortModal } from '../components/dashboard/SortModal'
+import { SummaryCard } from '../components/dashboard/SummaryCard'
+import { UserDropdown } from '../components/dashboard/UserDropdown'
 
 export default function Dashboard() {
-  const user = useAuthStore((s) => s.user)
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const logout = useAuthStore((s) => s.logout)
-  const { tenders } = useTenderStore()
-  const navigate = useNavigate()
-  const [showDropdown, setShowDropdown] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const { tenders, sortType, setSortType } = useTenderStore()
+  const [showSortModal, setShowSortModal] = useState(false)
+  const [selectedSort, setSelectedSort] = useState<SortType>(sortType)
+
+  // Sync selectedSort with sortType from store when it changes
+  useEffect(() => {
+    setSelectedSort(sortType)
+  }, [sortType])
 
   const totalTenders = tenders.length
   const draftCount = tenders.filter((t) => t.status === 'draft').length
   const ongoingCount = tenders.filter((t) => t.status === 'ongoing').length
   const completedCount = tenders.filter((t) => t.status === 'completed').length
 
-  // Close dropdown when clicking outside
+  // Close sort modal on ESC key
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowDropdown(false)
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showSortModal) {
+        setShowSortModal(false)
       }
     }
 
-    if (showDropdown) {
-      document.addEventListener('mousedown', handleClickOutside)
+    if (showSortModal) {
+      document.addEventListener('keydown', handleEscape)
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscape)
     }
-  }, [showDropdown])
+  }, [showSortModal])
 
-  const handleUserClick = () => {
-    setShowDropdown(!showDropdown)
+  const handleSortClick = () => {
+    setSelectedSort(sortType)
+    setShowSortModal(true)
   }
 
-  const handleLogin = () => {
-    setShowDropdown(false)
-    navigate('/login')
+  const handleSortClose = () => {
+    setShowSortModal(false)
   }
 
-  const handleLogout = () => {
-    setShowDropdown(false)
-    logout()
-    navigate('/login')
+  const handleSortContinue = () => {
+    setSortType(selectedSort)
+    setShowSortModal(false)
+  }
+
+  const handleSortChange = (option: SortType) => {
+    setSelectedSort(option)
   }
 
   return (
@@ -72,39 +71,7 @@ export default function Dashboard() {
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold text-gray-800">Tender</h1>
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={handleUserClick}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-            >
-              <User className="w-5 h-5 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">
-                {user?.name ?? 'User'}
-              </span>
-            </button>
-
-            {showDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                {isAuthenticated ? (
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Logout
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleLogin}
-                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                  >
-                    <LogIn className="w-4 h-4" />
-                    Login
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+          <UserDropdown />
         </div>
       </div>
 
@@ -112,59 +79,34 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto px-6 py-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FileText className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-800">
-                  {totalTenders}
-                </p>
-                <p className="text-sm text-gray-600">Total Tenders</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gray-100 rounded-lg">
-                <Clock className="w-5 h-5 text-gray-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-800">{draftCount}</p>
-                <p className="text-sm text-gray-600">Draft</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FileText className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-800">
-                  {ongoingCount}
-                </p>
-                <p className="text-sm text-gray-600">Ongoing</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-800">
-                  {completedCount}
-                </p>
-                <p className="text-sm text-gray-600">Completed</p>
-              </div>
-            </div>
-          </div>
+          <SummaryCard
+            icon={FileText}
+            value={totalTenders}
+            label="Total Tenders"
+            iconBgColor="bg-blue-100"
+            iconColor="text-blue-600"
+          />
+          <SummaryCard
+            icon={Clock}
+            value={draftCount}
+            label="Draft"
+            iconBgColor="bg-gray-100"
+            iconColor="text-gray-600"
+          />
+          <SummaryCard
+            icon={FileText}
+            value={ongoingCount}
+            label="Ongoing"
+            iconBgColor="bg-blue-100"
+            iconColor="text-blue-600"
+          />
+          <SummaryCard
+            icon={CheckCircle}
+            value={completedCount}
+            label="Completed"
+            iconBgColor="bg-green-100"
+            iconColor="text-green-600"
+          />
         </div>
 
         {/* Toolbar */}
@@ -203,6 +145,7 @@ export default function Dashboard() {
               {/* Sort button */}
               <button
                 type="button"
+                onClick={handleSortClick}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700"
               >
                 <Menu className="w-4 h-4" />
@@ -224,6 +167,14 @@ export default function Dashboard() {
         {/* Kanban Board */}
         <KanbanBoard />
       </div>
+
+      <SortModal
+        isOpen={showSortModal}
+        selectedSort={selectedSort}
+        onClose={handleSortClose}
+        onContinue={handleSortContinue}
+        onSortChange={handleSortChange}
+      />
     </div>
   )
 }
