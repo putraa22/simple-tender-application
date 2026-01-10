@@ -1,7 +1,3 @@
-/**
- * LocalStorage Keys
- */
-
 export const STORAGE_KEYS = {
   TOKEN: 'token',
   REFRESH_TOKEN: 'refreshToken',
