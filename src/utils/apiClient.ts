@@ -1,3 +1,5 @@
+import { useAuthStore } from '../store/authStore'
+
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
 export interface ApiClientConfig {
@@ -37,6 +39,16 @@ export class ApiClient {
     }
   }
 
+  private getAuthHeaders(): Record<string, string> {
+    const token = useAuthStore.getState().token
+    if (token) {
+      return {
+        Authorization: `Bearer ${token}`,
+      }
+    }
+    return {}
+  }
+
   async request<TResponse = unknown>(
     path: string,
     method: HttpMethod,
@@ -49,6 +61,8 @@ export class ApiClient {
       '/' +
       path.replace(/^\/+/, '') +
       buildQueryString(query)
+
+    const authHeaders = this.getAuthHeaders()
 
     const fetchBody: BodyInit | null | undefined =
       body === undefined || body === null
@@ -63,6 +77,7 @@ export class ApiClient {
         mode: 'cors',
         headers: {
           ...this.defaultHeaders,
+          ...authHeaders,
           ...(headers as Record<string, string>),
         },
         body: fetchBody,
@@ -70,6 +85,12 @@ export class ApiClient {
       })
 
       if (!response.ok) {
+        if (response.status === 401) {
+          const token = useAuthStore.getState().token
+          if (token) {
+            useAuthStore.getState().logout()
+          }
+        }
         const text = await response.text().catch(() => '')
         const errorMessage = text || response.statusText
         throw new Error(`API error ${response.status}: ${errorMessage}`)

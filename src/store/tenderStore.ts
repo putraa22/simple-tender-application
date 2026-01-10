@@ -29,87 +29,19 @@ interface TenderState {
   sortType: SortType
   moveTender: (tenderId: string, newStatus: TenderStatus) => void
   addTender: (tender: Omit<Tender, 'id'>) => void
+  setTenders: (tenders: Tender[]) => void
   setSortType: (sortType: SortType) => void
   getSortedTenders: () => Tender[]
 }
 
-// Mock data with varied values for testing sorting
-const initialTenders: Tender[] = [
-  {
-    id: '1',
-    title: 'IT Equipment Upgrade',
-    description: 'Upgrade computers and networking equipment',
-    productsCount: 15,
-    participantsCount: 5,
-    date: '28 Feb 2025',
-    amount: 'Rp 200.000.000',
-    attachmentsCount: 1,
-    commentsCount: 0,
-    status: 'draft',
-  },
-  {
-    id: '2',
-    title: 'Office Supplies Procurement',
-    description: 'Annual procurement of office supplies for all departments',
-    productsCount: 8,
-    participantsCount: 2,
-    date: '31 Jan 2025',
-    amount: 'Rp 50.000.000',
-    attachmentsCount: 2,
-    commentsCount: 1,
-    status: 'ongoing',
-  },
-  {
-    id: '3',
-    title: 'Building Maintenance Services',
-    description: 'Annual maintenance contract for office building',
-    productsCount: 12,
-    participantsCount: 4,
-    date: '31 Dec 2024',
-    amount: 'Rp 100.000.000',
-    attachmentsCount: 0,
-    commentsCount: 0,
-    status: 'completed',
-  },
-  {
-    id: '4',
-    title: 'Software License Renewal',
-    description: 'Renewal of enterprise software licenses',
-    productsCount: 20,
-    participantsCount: 3,
-    date: '15 Mar 2025',
-    amount: 'Rp 150.000.000',
-    attachmentsCount: 3,
-    commentsCount: 2,
-    status: 'draft',
-  },
-  {
-    id: '5',
-    title: 'Cleaning Services Contract',
-    description: 'Monthly cleaning services for office building',
-    productsCount: 5,
-    participantsCount: 6,
-    date: '10 Feb 2025',
-    amount: 'Rp 30.000.000',
-    attachmentsCount: 1,
-    commentsCount: 0,
-    status: 'ongoing',
-  },
-  {
-    id: '6',
-    title: 'Security System Installation',
-    description: 'Installation of new security camera system',
-    productsCount: 18,
-    participantsCount: 4,
-    date: '20 Jan 2025',
-    amount: 'Rp 180.000.000',
-    attachmentsCount: 2,
-    commentsCount: 1,
-    status: 'completed',
-  },
-]
+const initialTenders: Tender[] = []
 
 const parseDate = (dateStr: string): Date => {
+  const date = new Date(dateStr)
+  if (!isNaN(date.getTime())) {
+    return date
+  }
+
   const months: Record<string, number> = {
     jan: 0,
     feb: 1,
@@ -154,6 +86,7 @@ export const useTenderStore = create<TenderState>((set, get) => ({
         },
       ],
     })),
+  setTenders: (tenders) => set({ tenders }),
   setSortType: (sortType) => set({ sortType }),
   getSortedTenders: () => {
     const { tenders, sortType } = get()

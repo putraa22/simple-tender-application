@@ -15,9 +15,11 @@ import { useTenderStore, type SortType } from '../store/tenderStore'
 import { SortModal } from '../components/dashboard/SortModal'
 import { SummaryCard } from '../components/dashboard/SummaryCard'
 import { UserDropdown } from '../components/dashboard/UserDropdown'
+import { useTenders } from '../hooks/useTenders'
 
 export default function Dashboard() {
   const { tenders, sortType, setSortType } = useTenderStore()
+  const { isLoading, error } = useTenders()
   const navigate = useNavigate()
   const [showSortModal, setShowSortModal] = useState(false)
   const [selectedSort, setSelectedSort] = useState<SortType>(sortType)
@@ -157,8 +159,17 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Kanban Board */}
-        <KanbanBoard />
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-gray-500">Loading tenders...</div>
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-red-500">{error}</div>
+          </div>
+        ) : (
+          <KanbanBoard />
+        )}
       </div>
 
       <SortModal

@@ -27,7 +27,6 @@ export function KanbanBoard() {
   const { tenders, sortType, moveTender } = useTenderStore()
   const [activeTender, setActiveTender] = useState<Tender | null>(null)
 
-  // Helper function to sort tenders based on sortType
   const sortTenders = (tenderList: Tender[]): Tender[] => {
     if (!sortType) return tenderList
 
@@ -55,7 +54,6 @@ export function KanbanBoard() {
     }
   }
 
-  // Helper function to parse date string (e.g., "28 Feb 2025")
   const parseDate = (dateStr: string): Date => {
     const months: Record<string, number> = {
       jan: 0,

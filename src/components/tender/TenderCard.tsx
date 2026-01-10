@@ -1,5 +1,5 @@
 import type { Tender } from '../../store/tenderStore'
-import { Calendar, DollarSign } from 'lucide-react'
+import { Calendar, DollarSign, SquareChartGantt, Users } from 'lucide-react'
 
 interface TenderCardProps {
   tender: Tender
@@ -34,6 +34,16 @@ export function TenderCard({ tender }: TenderCardProps) {
       )}
 
       <div className="space-y-2 mb-3">
+        <div className="flex items-center gap-2 text-xs text-gray-600">
+          <div className="flex items-center gap-2">
+            <SquareChartGantt className="w-3.5 h-3.5" />
+            <span>{tender.productsCount} products</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Users className="w-3.5 h-3.5" />
+            <span>{tender.participantsCount} Participants</span>
+          </div>
+        </div>
         <div className="flex items-center gap-2 text-xs text-gray-600">
           <Calendar className="w-3.5 h-3.5" />
           <span>{tender.date}</span>

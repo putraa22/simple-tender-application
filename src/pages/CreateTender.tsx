@@ -59,7 +59,6 @@ export default function CreateTender() {
       }
     } else if (activeTab === 'overview') {
       if (isStarted) {
-        // Finish Tender
         addTender({
           title: generalInfo.tenderName,
           description: generalInfo.descriptions,

@@ -42,3 +42,15 @@ export interface RefreshTokenData {
 export type RefreshTokenResponse = ApiResponse<RefreshTokenData>
 
 export type LogoutResponse = ApiResponse<null>
+
+export interface TenderApiItem {
+  id: number
+  name: string
+  date: string
+  requester_name: string
+  description: string
+  total_product: number
+  total_participant: number
+}
+
+export type TenderListResponse = ApiResponse<TenderApiItem[]>
