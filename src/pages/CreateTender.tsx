@@ -7,8 +7,14 @@ import { GeneralInformationTab } from '../components/create-tender/GeneralInform
 import { ProductsTab } from '../components/create-tender/ProductsTab'
 import { VendorsTab } from '../components/create-tender/VendorsTab'
 import { OverviewTab } from '../components/create-tender/OverviewTab'
-import { useTenderStore } from '../store/tenderStore'
 import { useCreateTenderStore } from '../store/createTenderStore'
+import { useCreateProduct } from '../hooks/useCreateProduct'
+import { useCreateTender } from '../hooks/useCreateTender'
+import {
+  transformProductToCreateRequest,
+  formatDateToISO8601,
+} from '../utils/tenderCreateTransform'
+import { useTenders } from '../hooks/useTenders'
 
 type TabId = 'general' | 'products' | 'vendors' | 'overview'
 
@@ -34,12 +40,14 @@ const getNextTab = (currentTab: TabId): TabId | null => {
 
 export default function CreateTender() {
   const navigate = useNavigate()
-  const addTender = useTenderStore((s) => s.addTender)
-  const { generalInfo, products, vendors, isStarted, reset } =
+  const { refetch: refetchTenders } = useTenders()
+  const { generalInfo, products, vendors, isStarted, setTenderId, reset } =
     useCreateTenderStore()
+  const { createProduct, isLoading: isCreatingProduct } = useCreateProduct()
+  const { createTender, isLoading: isCreatingTender } = useCreateTender()
   const [activeTab, setActiveTab] = useState<TabId>('general')
 
-  const handleSave = (): void => {
+  const handleSave = async (): Promise<void> => {
     const nextTab = getNextTab(activeTab)
 
     if (activeTab === 'general') {
@@ -59,29 +67,40 @@ export default function CreateTender() {
       }
     } else if (activeTab === 'overview') {
       if (isStarted) {
-        addTender({
-          title: generalInfo.tenderName,
-          description: generalInfo.descriptions,
-          productsCount: products.length,
-          participantsCount: vendors.length,
-          date: generalInfo.date,
-          status: 'draft',
-        })
         reset()
         navigate('/')
       }
     }
   }
 
-  const handleFinishTender = (): void => {
-    addTender({
-      title: generalInfo.tenderName,
+  const handleStartTender = async (): Promise<void> => {
+    const tenderRequest = {
+      name: generalInfo.tenderName,
+      date: formatDateToISO8601(generalInfo.date),
+      requester_name: generalInfo.requesterName,
       description: generalInfo.descriptions,
-      productsCount: products.length,
-      participantsCount: vendors.length,
-      date: generalInfo.date,
-      status: 'ongoing',
-    })
+      total_participant: vendors.length,
+      total_product: products.length,
+    }
+
+    const result = await createTender(tenderRequest)
+    if (result) {
+      setTenderId(result.id)
+
+      if (products.length > 0) {
+        for (const product of products) {
+          const productRequest = transformProductToCreateRequest(product)
+          await createProduct(result.id, productRequest)
+        }
+      }
+
+      const { startTender } = useCreateTenderStore.getState()
+      startTender()
+    }
+  }
+
+  const handleFinishTender = async (): Promise<void> => {
+    await refetchTenders()
     reset()
     navigate('/')
   }
@@ -121,9 +140,13 @@ export default function CreateTender() {
               onSave={handleFinishTender}
               saveLabel="Finish Tender"
               saveVariant="green"
+              isLoading={isCreatingTender}
             />
           ) : (
-            <ActionButtons onSave={handleSave} />
+            <ActionButtons
+              onSave={handleSave}
+              isLoading={isCreatingTender || isCreatingProduct}
+            />
           )}
         </div>
       </div>
@@ -141,7 +164,12 @@ export default function CreateTender() {
           {activeTab === 'general' && <GeneralInformationTab />}
           {activeTab === 'products' && <ProductsTab />}
           {activeTab === 'vendors' && <VendorsTab />}
-          {activeTab === 'overview' && <OverviewTab />}
+          {activeTab === 'overview' && (
+            <OverviewTab
+              onStartTender={handleStartTender}
+              isLoading={isCreatingTender || isCreatingProduct}
+            />
+          )}
         </div>
       </div>
     </div>

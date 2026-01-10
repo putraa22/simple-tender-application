@@ -51,6 +51,68 @@ export interface TenderApiItem {
   description: string
   total_product: number
   total_participant: number
+  status?: number
 }
 
 export type TenderListResponse = ApiResponse<TenderApiItem[]>
+
+export interface CreateProductRequest {
+  product_name: string
+  brand: string
+  specification: string
+  uom: string
+  quantity: number
+  term_of_payment: string
+  last_price: number
+  id: number
+}
+
+export interface CreateProductResponse {
+  id: number
+  product_name: string
+  brand: string
+  specification: string
+  uom: string
+  quantity: number
+  term_of_payment: string
+  last_price: number
+}
+
+export type CreateProductApiResponse = ApiResponse<CreateProductResponse>
+
+export interface VendorOption {
+  id: number
+  name: string
+  email: string
+  address?: string
+  pic_name?: string
+  phone_number?: string
+  payment_terms?: string
+  delivery_time_days?: number
+}
+
+export type VendorOptionsResponse = ApiResponse<VendorOption[]>
+
+export interface CreateTenderRequest {
+  name: string
+  date: string
+  requester_name: string
+  description: string
+  total_participant: number
+  total_product: number
+}
+
+export interface CreateTenderResponse {
+  created_on: string
+  modified_on: string
+  id: number
+  name: string
+  date: string
+  requester_name: string
+  description: string
+  status: number
+  created_by: string
+  modified_by: string
+}
+
+export type CreateTenderApiResponse = ApiResponse<CreateTenderResponse>

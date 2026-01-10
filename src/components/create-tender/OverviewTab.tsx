@@ -1,8 +1,16 @@
 import { CheckCircle } from 'lucide-react'
 import { useCreateTenderStore } from '../../store/createTenderStore'
 
-export function OverviewTab() {
-  const { isStarted, products, vendors, startTender } = useCreateTenderStore()
+interface OverviewTabProps {
+  onStartTender: () => Promise<void>
+  isLoading?: boolean
+}
+
+export function OverviewTab({
+  onStartTender,
+  isLoading = false,
+}: OverviewTabProps) {
+  const { isStarted, products, vendors } = useCreateTenderStore()
 
   if (!isStarted) {
     return (
@@ -20,10 +28,11 @@ export function OverviewTab() {
           click the button below.
         </p>
         <button
-          onClick={startTender}
-          className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+          onClick={onStartTender}
+          disabled={isLoading}
+          className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Start Tender
+          {isLoading ? 'Starting...' : 'Start Tender'}
         </button>
       </div>
     )

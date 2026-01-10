@@ -27,24 +27,16 @@ const formatDate = (dateString: string): string => {
   }
 }
 
+const mapStatusFromApi = (status?: number): TenderStatus => {
+  if (status === 1) return 'draft'
+  if (status === 2) return 'ongoing'
+  if (status === 3) return 'completed'
+  return 'draft'
+}
+
 const determineStatus = (tender: TenderApiItem): TenderStatus => {
-  const now = new Date()
-  const tenderDate = new Date(tender.date)
-
-  if (tenderDate > now) {
-    return 'draft'
-  }
-
-  if (tenderDate <= now) {
-    const daysDiff = Math.floor(
-      (now.getTime() - tenderDate.getTime()) / (1000 * 60 * 60 * 24)
-    )
-
-    if (daysDiff > 30) {
-      return 'completed'
-    }
-
-    return 'ongoing'
+  if (tender.status !== undefined && tender.status !== null) {
+    return mapStatusFromApi(tender.status)
   }
 
   return 'draft'

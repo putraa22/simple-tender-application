@@ -5,43 +5,15 @@ import {
   type Vendor,
 } from '../../store/createTenderStore'
 import { SelectVendorModal } from './SelectVendorModal'
-
-const mockVendors: Vendor[] = [
-  {
-    id: '1',
-    name: 'Teknologi Cepat Indonesia',
-    email: 'info@teknologi-cepat.com',
-    address: 'Jakarta Barat',
-    picName: 'John Doe',
-    phoneNumber: '+62 812-3456-7890',
-    paymentTerms: 'Net 30',
-    deliveryTimeDays: 7,
-  },
-  {
-    id: '2',
-    name: 'Dremboox',
-    email: 'contact@dremboox.com',
-    address: 'Jakarta Selatan',
-    picName: 'Jane Smith',
-    phoneNumber: '+62 812-3456-7891',
-    paymentTerms: 'Net 60',
-    deliveryTimeDays: 14,
-  },
-  {
-    id: '3',
-    name: 'PT. Indri Jaya Maju',
-    email: 'info@indri-jaya.com',
-    address: 'Jakarta Timur',
-    picName: 'Bob Johnson',
-    phoneNumber: '+62 812-3456-7892',
-    paymentTerms: 'Cash on Delivery',
-    deliveryTimeDays: 5,
-  },
-]
+import { useVendorOptions } from '../../hooks/useVendorOptions'
+import { transformVendorOptionToVendor } from '../../utils/tenderCreateTransform'
 
 export function VendorsTab() {
   const { vendors, removeVendor } = useCreateTenderStore()
+  const { vendors: vendorOptions, isLoading, error } = useVendorOptions()
   const [showSelectModal, setShowSelectModal] = useState(false)
+
+  const availableVendors = vendorOptions.map(transformVendorOptionToVendor)
 
   return (
     <div className="animate-fadeIn">
@@ -91,9 +63,13 @@ export function VendorsTab() {
         </div>
       )}
 
-      {showSelectModal && (
+      {isLoading && (
+        <div className="text-center py-8 text-gray-500">Loading vendors...</div>
+      )}
+      {error && <div className="text-center py-8 text-red-500">{error}</div>}
+      {showSelectModal && !isLoading && (
         <SelectVendorModal
-          availableVendors={mockVendors}
+          availableVendors={availableVendors}
           selectedVendorIds={vendors.map((v) => v.id)}
           onClose={() => setShowSelectModal(false)}
         />

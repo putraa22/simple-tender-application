@@ -25,6 +25,7 @@ export interface Vendor {
 }
 
 interface CreateTenderState {
+  tenderId: number | null
   generalInfo: {
     tenderName: string
     date: string
@@ -34,6 +35,7 @@ interface CreateTenderState {
   products: Product[]
   vendors: Vendor[]
   isStarted: boolean
+  setTenderId: (id: number | null) => void
   setGeneralInfo: (info: Partial<CreateTenderState['generalInfo']>) => void
   addProduct: (product: Product) => void
   removeProduct: (productId: string) => void
@@ -44,6 +46,7 @@ interface CreateTenderState {
 }
 
 const initialState = {
+  tenderId: null,
   generalInfo: {
     tenderName: 'Laptop',
     date: '',
@@ -57,6 +60,7 @@ const initialState = {
 
 export const useCreateTenderStore = create<CreateTenderState>((set) => ({
   ...initialState,
+  setTenderId: (id) => set({ tenderId: id }),
   setGeneralInfo: (info) =>
     set((state) => ({
       generalInfo: { ...state.generalInfo, ...info },

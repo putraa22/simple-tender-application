@@ -12,6 +12,24 @@ export function GeneralInformationTab() {
     setGeneralInfo({ [name]: value })
   }
 
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const { value } = e.target
+    if (value) {
+      const now = new Date()
+      const hours = String(now.getHours()).padStart(2, '0')
+      const minutes = String(now.getMinutes()).padStart(2, '0')
+      const seconds = String(now.getSeconds()).padStart(2, '0')
+      const currentTime = `${hours}:${minutes}:${seconds}`
+
+      const dateValue = value.includes('T')
+        ? `${value.split('T')[0]}T${currentTime}`
+        : `${value}T${currentTime}`
+      setGeneralInfo({ date: dateValue })
+    } else {
+      setGeneralInfo({ date: '' })
+    }
+  }
+
   return (
     <div className="space-y-6 animate-fadeIn">
       <div className="bg-gray-50 rounded-lg p-4">
@@ -28,10 +46,10 @@ export function GeneralInformationTab() {
         <FormField
           label="Date"
           name="date"
-          type="text"
-          value={generalInfo.date}
-          onChange={handleInputChange}
-          placeholder="Please insert date"
+          type="date"
+          value={generalInfo.date ? generalInfo.date.split('T')[0] : ''}
+          onChange={handleDateChange}
+          placeholder="YYYY-MM-DD"
         />
       </div>
 

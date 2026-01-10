@@ -7,6 +7,7 @@ interface ActionButtonsProps {
   saveLabel?: string
   saveDisabled?: boolean
   saveVariant?: 'blue' | 'green'
+  isLoading?: boolean
 }
 
 export function ActionButtons({
@@ -16,6 +17,7 @@ export function ActionButtons({
   saveLabel = 'Save Changes',
   saveDisabled = false,
   saveVariant = 'blue',
+  isLoading = false,
 }: ActionButtonsProps) {
   return (
     <div className="flex items-center gap-3">
@@ -43,7 +45,7 @@ export function ActionButtons({
         <button
           type="button"
           onClick={onSave}
-          disabled={saveDisabled}
+          disabled={saveDisabled || isLoading}
           className={`flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed ${
             saveVariant === 'green'
               ? 'bg-green-600 hover:bg-green-700'
@@ -51,7 +53,7 @@ export function ActionButtons({
           }`}
         >
           <Check className="w-4 h-4" />
-          {saveLabel}
+          {isLoading ? 'Saving...' : saveLabel}
         </button>
       )}
     </div>
