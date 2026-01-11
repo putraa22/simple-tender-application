@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { apiClient } from '../utils/apiClient'
 import { useTenderStore } from '../store/tenderStore'
 import { transformTenderListApiToTenders } from '../utils/tenderTransform'
+import { applyPersistedStatuses } from '../utils/tenderStatusPersistence'
 import type { TenderListResponse } from '../types/api'
 
 interface UseTendersReturn {
@@ -24,7 +25,8 @@ export function useTenders(): UseTendersReturn {
 
       if (response.code === 200 && response.data) {
         const tenders = transformTenderListApiToTenders(response.data)
-        setTenders(tenders)
+        const tendersWithPersistedStatuses = applyPersistedStatuses(tenders)
+        setTenders(tendersWithPersistedStatuses)
       } else {
         setError(response.message || 'Failed to fetch tenders')
       }

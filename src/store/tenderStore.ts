@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persistTenderStatus } from '../utils/tenderStatusPersistence'
 
 export type TenderStatus = 'draft' | 'ongoing' | 'completed'
 
@@ -70,12 +71,14 @@ const parseDate = (dateStr: string): Date => {
 export const useTenderStore = create<TenderState>((set, get) => ({
   tenders: initialTenders,
   sortType: null,
-  moveTender: (tenderId, newStatus) =>
+  moveTender: (tenderId, newStatus) => {
+    persistTenderStatus(tenderId, newStatus)
     set((state) => ({
       tenders: state.tenders.map((tender) =>
         tender.id === tenderId ? { ...tender, status: newStatus } : tender
       ),
-    })),
+    }))
+  },
   addTender: (tender) =>
     set((state) => ({
       tenders: [
