@@ -23,8 +23,13 @@ const columns: Array<{ status: TenderStatus; label: string }> = [
   { status: 'completed', label: 'Completed' },
 ]
 
-export function KanbanBoard() {
-  const { tenders, sortType, moveTender } = useTenderStore()
+interface KanbanBoardProps {
+  filteredTenders?: Tender[]
+}
+
+export function KanbanBoard({ filteredTenders }: KanbanBoardProps) {
+  const { tenders: allTenders, sortType, moveTender } = useTenderStore()
+  const tenders = filteredTenders ?? allTenders
   const [activeTender, setActiveTender] = useState<Tender | null>(null)
 
   const sortTenders = (tenderList: Tender[]): Tender[] => {

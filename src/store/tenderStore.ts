@@ -25,14 +25,25 @@ export interface Tender {
   status: TenderStatus
 }
 
+interface HistoryState {
+  tenders: Tender[]
+  timestamp: number
+}
+
 interface TenderState {
   tenders: Tender[]
   sortType: SortType
+  history: HistoryState[]
+  historyIndex: number
   moveTender: (tenderId: string, newStatus: TenderStatus) => void
   addTender: (tender: Omit<Tender, 'id'>) => void
   setTenders: (tenders: Tender[]) => void
   setSortType: (sortType: SortType) => void
   getSortedTenders: () => Tender[]
+  undo: () => void
+  redo: () => void
+  canUndo: () => boolean
+  canRedo: () => boolean
 }
 
 const initialTenders: Tender[] = []
@@ -68,16 +79,72 @@ const parseDate = (dateStr: string): Date => {
   return new Date(0)
 }
 
+const MAX_HISTORY_SIZE = 50
+
 export const useTenderStore = create<TenderState>((set, get) => ({
   tenders: initialTenders,
   sortType: null,
+  history: [],
+  historyIndex: -1,
+  canUndo: () => {
+    const { history, historyIndex } = get()
+    // Can undo if we have at least 2 states in history (initial + at least 1 change)
+    return history.length >= 2 && historyIndex > 0
+  },
+  canRedo: () => {
+    const { history, historyIndex } = get()
+    // Can redo if we have history and we're not at the last state
+    return history.length > 0 && historyIndex < history.length - 1
+  },
   moveTender: (tenderId, newStatus) => {
+    const { tenders, history, historyIndex } = get()
+    const currentTender = tenders.find((t) => t.id === tenderId)
+
+    // Don't add to history if status hasn't changed
+    if (currentTender?.status === newStatus) {
+      return
+    }
+
+    // Create new state after the change
+    const newTenders = tenders.map((tender) =>
+      tender.id === tenderId ? { ...tender, status: newStatus } : tender
+    )
+
+    // Initialize history if empty or invalid index
+    let newHistory: HistoryState[]
+
+    if (history.length === 0 || historyIndex < 0) {
+      // First time: save current state as initial state
+      newHistory = [
+        {
+          tenders: tenders.map((t) => ({ ...t })),
+          timestamp: Date.now(),
+        },
+      ]
+    } else {
+      // Normal case: slice history up to current index
+      newHistory = history.slice(0, historyIndex + 1)
+    }
+
+    // Add the new state to history
+    newHistory.push({
+      tenders: newTenders.map((t) => ({ ...t })),
+      timestamp: Date.now(),
+    })
+
+    // Limit history size
+    let finalHistoryIndex = newHistory.length - 1
+    if (newHistory.length > MAX_HISTORY_SIZE) {
+      newHistory.shift()
+      finalHistoryIndex = newHistory.length - 1
+    }
+
     persistTenderStatus(tenderId, newStatus)
-    set((state) => ({
-      tenders: state.tenders.map((tender) =>
-        tender.id === tenderId ? { ...tender, status: newStatus } : tender
-      ),
-    }))
+    set({
+      tenders: newTenders,
+      history: newHistory,
+      historyIndex: finalHistoryIndex,
+    })
   },
   addTender: (tender) =>
     set((state) => ({
@@ -89,7 +156,20 @@ export const useTenderStore = create<TenderState>((set, get) => ({
         },
       ],
     })),
-  setTenders: (tenders) => set({ tenders }),
+  setTenders: (tenders) => {
+    // Initialize history with current state as the first entry
+    // This allows undo to work from the first move
+    set({
+      tenders,
+      history: [
+        {
+          tenders: tenders.map((t) => ({ ...t })),
+          timestamp: Date.now(),
+        },
+      ],
+      historyIndex: 0,
+    })
+  },
   setSortType: (sortType) => set({ sortType }),
   getSortedTenders: () => {
     const { tenders, sortType } = get()
@@ -116,6 +196,40 @@ export const useTenderStore = create<TenderState>((set, get) => ({
         )
       default:
         return tenders
+    }
+  },
+  undo: () => {
+    const { history, historyIndex } = get()
+    if (historyIndex <= 0) return
+
+    const previousState = history[historyIndex - 1]
+    if (previousState) {
+      // Restore previous state and update persisted statuses
+      previousState.tenders.forEach((tender) => {
+        persistTenderStatus(tender.id, tender.status)
+      })
+
+      set({
+        tenders: previousState.tenders.map((t) => ({ ...t })),
+        historyIndex: historyIndex - 1,
+      })
+    }
+  },
+  redo: () => {
+    const { history, historyIndex } = get()
+    if (historyIndex >= history.length - 1) return
+
+    const nextState = history[historyIndex + 1]
+    if (nextState) {
+      // Restore next state and update persisted statuses
+      nextState.tenders.forEach((tender) => {
+        persistTenderStatus(tender.id, tender.status)
+      })
+
+      set({
+        tenders: nextState.tenders.map((t) => ({ ...t })),
+        historyIndex: historyIndex + 1,
+      })
     }
   },
 }))

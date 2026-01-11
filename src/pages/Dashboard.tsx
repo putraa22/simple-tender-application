@@ -7,8 +7,9 @@ import {
   FileText,
   Clock,
   CheckCircle,
+  X,
 } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { KanbanBoard } from '../components/tender/KanbanBoard'
 import { useTenderStore, type SortType } from '../store/tenderStore'
@@ -18,20 +19,49 @@ import { UserDropdown } from '../components/dashboard/UserDropdown'
 import { useTenders } from '../hooks/useTenders'
 
 export default function Dashboard() {
-  const { tenders, sortType, setSortType } = useTenderStore()
+  const { tenders, sortType, setSortType, undo, redo, canUndo, canRedo } =
+    useTenderStore()
   const { isLoading, error } = useTenders()
   const navigate = useNavigate()
   const [showSortModal, setShowSortModal] = useState(false)
   const [selectedSort, setSelectedSort] = useState<SortType>(sortType)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     setSelectedSort(sortType)
   }, [sortType])
 
-  const totalTenders = tenders.length
-  const draftCount = tenders.filter((t) => t.status === 'draft').length
-  const ongoingCount = tenders.filter((t) => t.status === 'ongoing').length
-  const completedCount = tenders.filter((t) => t.status === 'completed').length
+  // Filter tenders based on search query
+  const filteredTenders = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return tenders
+    }
+
+    const query = searchQuery.toLowerCase().trim()
+    return tenders.filter((tender) => {
+      const titleMatch = tender.title.toLowerCase().includes(query)
+      const descriptionMatch =
+        tender.description?.toLowerCase().includes(query) ?? false
+      return titleMatch || descriptionMatch
+    })
+  }, [tenders, searchQuery])
+
+  const totalTenders = filteredTenders.length
+  const draftCount = filteredTenders.filter((t) => t.status === 'draft').length
+  const ongoingCount = filteredTenders.filter(
+    (t) => t.status === 'ongoing'
+  ).length
+  const completedCount = filteredTenders.filter(
+    (t) => t.status === 'completed'
+  ).length
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+  }
+
+  const handleClearSearch = () => {
+    setSearchQuery('')
+  }
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -65,6 +95,14 @@ export default function Dashboard() {
 
   const handleSortChange = (option: SortType) => {
     setSelectedSort(option)
+  }
+
+  const handleUndo = () => {
+    undo()
+  }
+
+  const handleRedo = () => {
+    redo()
   }
 
   return (
@@ -112,29 +150,55 @@ export default function Dashboard() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1 max-w-md">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <input
                   type="text"
                   placeholder="Search tenders..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 transition-colors"
+                    aria-label="Clear search"
+                  >
+                    <X className="w-4 h-4 text-gray-400" />
+                  </button>
+                )}
               </div>
             </div>
 
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                onClick={handleUndo}
+                disabled={!canUndo()}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 aria-label="Undo"
+                title="Undo last action"
               >
-                <Undo2 className="w-5 h-5 text-gray-600" />
+                <Undo2
+                  className={`w-5 h-5 ${
+                    canUndo() ? 'text-gray-600' : 'text-gray-300'
+                  }`}
+                />
               </button>
               <button
                 type="button"
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                onClick={handleRedo}
+                disabled={!canRedo()}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 aria-label="Redo"
+                title="Redo last action"
               >
-                <Redo2 className="w-5 h-5 text-gray-600" />
+                <Redo2
+                  className={`w-5 h-5 ${
+                    canRedo() ? 'text-gray-600' : 'text-gray-300'
+                  }`}
+                />
               </button>
 
               <button
@@ -168,7 +232,7 @@ export default function Dashboard() {
             <div className="text-red-500">{error}</div>
           </div>
         ) : (
-          <KanbanBoard />
+          <KanbanBoard filteredTenders={filteredTenders} />
         )}
       </div>
 
