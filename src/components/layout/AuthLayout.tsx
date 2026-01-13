@@ -22,7 +22,7 @@ export function AuthLayout({ title, description, children }: AuthLayoutProps) {
             <img
               src={logoTender}
               alt="Tender App"
-              className="max-w-full h-auto max-h-32 object-contain overflow-hidden"
+              className="max-w-full h-auto max-h-32 object-contain"
             />
           </div>
           <div className="text-xs text-blue-100">

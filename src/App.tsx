@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Login from './pages/Login'
 import ProtectedRoute from './components/ProtectedRoute'
 import Dashboard from './pages/Dashboard'
+import CreateTender from './pages/CreateTender'
 
 export default function App() {
   return (
@@ -13,6 +14,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/create-tender"
+          element={
+            <ProtectedRoute>
+              <CreateTender />
             </ProtectedRoute>
           }
         />

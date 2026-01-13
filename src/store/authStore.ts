@@ -1,29 +1,59 @@
 import { create } from 'zustand'
-
-type User = { id: string; name: string; email: string }
+import type { User } from '../types/auth'
+import { STORAGE_KEYS } from '../constants/storage'
 
 interface AuthState {
   token: string | null
+  refreshToken: string | null
   user: User | null
   isAuthenticated: boolean
-  login: (token: string, user: User) => void
+  login: (accessToken: string, refreshToken: string, user: User) => void
   logout: () => void
+  updateTokens: (accessToken: string, refreshToken: string) => void
 }
 
-const getInitialToken = (): string | null => {
-  if (typeof window === 'undefined') return null
+const isBrowser = typeof window !== 'undefined'
+
+const getStorageItem = (key: string): string | null => {
+  if (!isBrowser) return null
   try {
-    return localStorage.getItem('token')
+    return localStorage.getItem(key)
   } catch {
     return null
   }
 }
 
-const getInitialUser = (): User | null => {
-  if (typeof window === 'undefined') return null
+const setStorageItem = (key: string, value: string): void => {
+  if (!isBrowser) return
   try {
-    const stored = localStorage.getItem('user')
-    return stored ? (JSON.parse(stored) as User) : null
+    localStorage.setItem(key, value)
+  } catch (err) {
+    console.warn(`Failed to write ${key} to localStorage`, err)
+  }
+}
+
+const removeStorageItem = (key: string): void => {
+  if (!isBrowser) return
+  try {
+    localStorage.removeItem(key)
+  } catch (err) {
+    console.warn(`Failed to remove ${key} from localStorage`, err)
+  }
+}
+
+const getInitialToken = (): string | null => {
+  return getStorageItem(STORAGE_KEYS.TOKEN)
+}
+
+const getInitialRefreshToken = (): string | null => {
+  return getStorageItem(STORAGE_KEYS.REFRESH_TOKEN)
+}
+
+const getInitialUser = (): User | null => {
+  const stored = getStorageItem(STORAGE_KEYS.USER)
+  if (!stored) return null
+  try {
+    return JSON.parse(stored) as User
   } catch {
     return null
   }
@@ -31,36 +61,38 @@ const getInitialUser = (): User | null => {
 
 export const useAuthStore = create<AuthState>((set) => {
   const initialToken = getInitialToken()
+  const initialRefreshToken = getInitialRefreshToken()
   const initialUser = getInitialUser()
 
   return {
     token: initialToken,
+    refreshToken: initialRefreshToken,
     user: initialUser,
     isAuthenticated: !!initialToken,
 
-    login: (token, user) => {
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem('token', token)
-          localStorage.setItem('user', JSON.stringify(user))
-        } catch (err) {
-          console.warn('Failed to write auth data to localStorage', err)
-        }
-      }
-      set({ token, user, isAuthenticated: true })
+    login: (accessToken, refreshToken, user) => {
+      setStorageItem(STORAGE_KEYS.TOKEN, accessToken)
+      setStorageItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken)
+      setStorageItem(STORAGE_KEYS.USER, JSON.stringify(user))
+      set({ token: accessToken, refreshToken, user, isAuthenticated: true })
     },
 
     logout: () => {
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.removeItem('token')
-          localStorage.removeItem('user')
-        } catch (err) {
-          console.warn('Failed to logout', err)
-          // ignore storage errors
-        }
-      }
-      set({ token: null, user: null, isAuthenticated: false })
+      removeStorageItem(STORAGE_KEYS.TOKEN)
+      removeStorageItem(STORAGE_KEYS.REFRESH_TOKEN)
+      removeStorageItem(STORAGE_KEYS.USER)
+      set({
+        token: null,
+        refreshToken: null,
+        user: null,
+        isAuthenticated: false,
+      })
+    },
+
+    updateTokens: (accessToken, refreshToken) => {
+      setStorageItem(STORAGE_KEYS.TOKEN, accessToken)
+      setStorageItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken)
+      set({ token: accessToken, refreshToken })
     },
   }
 })
