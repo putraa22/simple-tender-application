@@ -126,13 +126,6 @@ or if using pnpm:
 pnpm install
 ```
 
-## 🔐 Environment Variables
-
-Create a `.env` file in the project root with the following configuration:
-
-```env
-VITE_API_BASE_URL=https://vendortest.siloamhospitals.com/tender/api
-```
 
 **Note:**
 
